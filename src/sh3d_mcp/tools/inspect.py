@@ -113,6 +113,35 @@ def open_reference(sample_sh3d_path: str) -> dict:
     }
 
 
+def delete_element(project_path: str, element_id: str) -> dict:
+    """Delete an editable element from a .sh3d project by id. Lengths are in centimetres and rotations in degrees. The plan coordinate system uses y increasing downward. This tool does not delete unsupported tags or repair geometry beyond clearing inbound wall join references to a deleted wall. Example: delete_element(project_path='house.sh3d', element_id='wall2')"""
+
+    path = _validate_project_path(project_path)
+    if not path.exists():
+        raise Sh3dError(
+            ErrorCode.PROJECT_NOT_FOUND,
+            f"Project file does not exist: {path}",
+            details={"project_path": str(path)},
+        )
+
+    document = Sh3dDocument.open(path)
+    element, kind = _find_editable_element(document, element_id)
+
+    references_cleared: list[str] = []
+    if kind == "wall":
+        references_cleared = _clear_wall_references(document, element_id)
+
+    document.root.remove(element)
+    document.save()
+
+    return {
+        "ok": True,
+        "deleted": element_id,
+        "kind": kind,
+        "references_cleared": references_cleared,
+    }
+
+
 def _normalize_kinds(kinds: list[str] | None) -> list[str]:
     """Validate the optional kind filter against the documented editable subsets."""
 
@@ -205,3 +234,39 @@ def _unknown_schema_items(document: Sh3dDocument) -> tuple[list[str], dict[str, 
         if attrs:
             unknown_attributes[element.tag] = attrs
     return unknown_tags, unknown_attributes
+
+
+def _find_editable_element(document: Sh3dDocument, element_id: str):
+    """Return the editable home child matching an id, or raise ELEMENT_NOT_FOUND."""
+
+    for kind, tag in (
+        ("wall", "wall"),
+        ("room", "room"),
+        ("furniture", "pieceOfFurniture"),
+        ("dimension", "dimensionLine"),
+    ):
+        for element in document.root.findall(tag):
+            if element.attrib.get("id") == element_id:
+                return element, kind
+
+    raise Sh3dError(
+        ErrorCode.ELEMENT_NOT_FOUND,
+        f"No editable element exists with id '{element_id}'.",
+        details={"element_id": element_id},
+    )
+
+
+def _clear_wall_references(document: Sh3dDocument, deleted_wall_id: str) -> list[str]:
+    """Clear inbound wallAtStart and wallAtEnd references to a deleted wall id."""
+
+    cleared_from: list[str] = []
+    for wall in document.root.findall("wall"):
+        wall_id = wall.attrib.get("id")
+        cleared = False
+        for attr in ("wallAtStart", "wallAtEnd"):
+            if wall.attrib.get(attr) == deleted_wall_id:
+                del wall.attrib[attr]
+                cleared = True
+        if cleared and wall_id is not None:
+            cleared_from.append(wall_id)
+    return cleared_from

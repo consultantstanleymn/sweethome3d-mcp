@@ -3,7 +3,9 @@ from pathlib import Path
 
 from sh3d_mcp.sh3d import archive
 from sh3d_mcp.sh3d.constants import HOME_XML_ENTRY
-from sh3d_mcp.tools.inspect import list_elements, open_reference
+from sh3d_mcp.sh3d.document import Sh3dDocument
+from sh3d_mcp.tools.inspect import delete_element, list_elements, open_reference
+from sh3d_mcp.tools.project import create_project, validate_project
 
 
 def test_list_elements_reports_unsupported_tags_and_does_not_write(tmp_path: Path) -> None:
@@ -82,3 +84,38 @@ def test_open_reference_reports_unknown_tags_and_populates_catalog(tmp_path: Pat
         "model_entry_name": "models/1.obj",
     }
     assert after_mtime == before_mtime
+
+
+def test_delete_joined_wall_clears_neighbor_references_and_keeps_project_valid(tmp_path: Path) -> None:
+    project_path = tmp_path / "delete-wall.sh3d"
+    create_project(
+        project_path=str(project_path),
+        name="House",
+        width=800.0,
+        height=600.0,
+        wall_thickness=7.5,
+    )
+
+    result = delete_element(project_path=str(project_path), element_id="wall1")
+
+    assert result == {
+        "ok": True,
+        "deleted": "wall1",
+        "kind": "wall",
+        "references_cleared": ["wall0", "wall2"],
+    }
+
+    document = Sh3dDocument.open(project_path)
+    wall_by_id = {wall.attrib["id"]: wall for wall in document.root.findall("wall")}
+
+    assert "wall1" not in wall_by_id
+    assert wall_by_id["wall0"].attrib.get("wallAtEnd") is None
+    assert wall_by_id["wall2"].attrib.get("wallAtStart") is None
+    assert wall_by_id["wall0"].attrib.get("wallAtStart") == "wall3"
+    assert wall_by_id["wall3"].attrib.get("wallAtEnd") == "wall0"
+    assert wall_by_id["wall2"].attrib.get("wallAtEnd") == "wall3"
+    assert wall_by_id["wall3"].attrib.get("wallAtStart") == "wall2"
+
+    validation = validate_project(project_path=str(project_path))
+
+    assert validation == {"ok": True, "errors": [], "warnings": []}
