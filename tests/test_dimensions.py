@@ -24,6 +24,21 @@ def test_add_dimension_zero_length_returns_documented_error(tmp_path: Path) -> N
     assert exc_info.value.code is ErrorCode.DEGENERATE_DIMENSION
 
 
+def test_add_dimension_missing_project_raises_documented_not_found_error(tmp_path: Path) -> None:
+    project_path = tmp_path / "missing.sh3d"
+
+    with pytest.raises(Sh3dError) as exc_info:
+        add_dimension(
+            project_path=str(project_path),
+            x1=10.0,
+            y1=20.0,
+            x2=110.0,
+            y2=20.0,
+        )
+
+    assert exc_info.value.code is ErrorCode.PROJECT_NOT_FOUND
+
+
 def test_add_dimension_emits_required_attributes_and_id(tmp_path: Path) -> None:
     project_path = tmp_path / "dimensions.sh3d"
     create_project(project_path=str(project_path), name="House")

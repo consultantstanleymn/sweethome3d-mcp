@@ -42,7 +42,7 @@ string. Every failure returns:
 
 ```json
 { "ok": false,
-  "error": { "code": "ROOM_NOT_CLOSED",
+  "error": { "code": "ROOM_TOO_FEW_POINTS",
              "message": "Room polygon has only 2 points; at least 3 are required.",
              "details": { "point_count": 2 },
              "hint": "Pass at least 3 distinct points; do not repeat the first point." } }
@@ -78,8 +78,7 @@ string. Every failure returns:
 1. Every numeric argument must be finite: reject `NaN`/`±inf` → `INVALID_ARGUMENT`.
 2. Every coordinate must satisfy `|v| <= 1_000_000` (10 km) → `INVALID_ARGUMENT`.
 3. `project_path` per ARCHITECTURE.md §10 → `BAD_PATH`.
-4. Booleans are real booleans; strings `"true"`/`"false"` are accepted and coerced (LLM
-   clients emit these), anything else → `INVALID_ARGUMENT`.
+4. Booleans are expected to arrive as real booleans from the MCP client layer.
 
 ## 3. `create_project`
 
@@ -236,7 +235,7 @@ Returns:
   "warnings": ["No 3D model available for 'eTeks#chair'; the piece will appear in the plan but may not render in 3D."] }
 ```
 
-## 7. `add_dimension` *(proposed addition — required by the stated goal "dimensions")*
+## 7. `add_dimension`
 
 ```python
 def add_dimension(
@@ -313,8 +312,7 @@ furniture catalogue (ARCHITECTURE.md §7 tier 1). It **never** writes to
 `sample_sh3d_path`.
 
 Returns:
-- the ZIP entry listing with sizes, and whether legacy `Home` / `Home.xml` / `ContentDigests`
-  are present;
+- `entry_names`: the ZIP entry names present in the sample archive, in archive order;
 - the `home` element's attributes verbatim;
 - a tag-frequency census of every element in the document (this is our ongoing empirical
   cross-check against docs/SCHEMA.md);
@@ -332,7 +330,7 @@ real models. `add_furniture` degrades gracefully to tier 2/3 if it was never cal
 Errors: `PROJECT_NOT_FOUND`, `NOT_A_ZIP`, `MISSING_HOME_XML` (a legacy `Home`-only file
 cannot be inspected — say so explicitly, this is a real and likely case), `MALFORMED_XML`.
 
-## 11. `validate_project` *(proposed addition)*
+## 11. `validate_project`
 
 ```python
 def validate_project(project_path: str) -> dict
@@ -343,7 +341,7 @@ Runs every rule in VALIDATION.md over an existing document without modifying it,
 can check its own work after a batch of edits, and so Phase 4 can regression-test whole
 fixture files.
 
-## 12. `delete_element` *(proposed addition)*
+## 12. `delete_element`
 
 ```python
 def delete_element(project_path: str, element_id: str) -> dict

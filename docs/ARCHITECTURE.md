@@ -178,7 +178,7 @@ Standard stdio server. `src/sh3d_mcp/server.py`:
 - Register each tool with `@mcp.tool()` on a thin wrapper that has a full type-annotated
   signature and a docstring (FastMCP derives the JSON Schema and the tool description from
   these — the docstring is user-facing LLM-facing text, write it accordingly).
-- Each wrapper does exactly: coerce/validate args → call the `tools/*.py` implementation →
+- Each wrapper does exactly: delegate to the `tools/*.py` implementation →
   return a JSON-serialisable `dict`. Catch `Sh3dError` and return the structured error
   envelope from TOOL_INTERFACE.md §2; let nothing else escape as a bare traceback.
 - `def main(): mcp.run()` — `mcp.run()` defaults to the stdio transport.
