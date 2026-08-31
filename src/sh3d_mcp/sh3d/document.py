@@ -8,13 +8,34 @@ import xml.etree.ElementTree as ET
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 
 from . import archive
-from .constants import CONTENT_DIGESTS_ENTRY, CURRENT_VERSION, HOME_XML_ENTRY, LEGACY_HOME_ENTRY
+from .constants import (
+    CONTENT_DIGESTS_ENTRY,
+    CURRENT_VERSION,
+    HOME_CHILD_ORDER,
+    HOME_XML_ENTRY,
+    LEGACY_HOME_ENTRY,
+    ROOM_CHILD_ORDER,
+)
 
 
 def reorder_children(root: ET.Element) -> None:
-    """Placeholder for canonical DTD-order child sorting; implemented in PLAN.md item 2.6."""
+    """Reorder home and room children into canonical DTD order, preserving unknown-tag order."""
 
-    return None
+    home_order = {tag: index for index, tag in enumerate(HOME_CHILD_ORDER)}
+    room_order = {tag: index for index, tag in enumerate(ROOM_CHILD_ORDER)}
+
+    home_children = list(root)
+    root[:] = sorted(
+        home_children,
+        key=lambda child: home_order.get(child.tag, len(home_order)),
+    )
+
+    for room in root.iter("room"):
+        room_children = list(room)
+        room[:] = sorted(
+            room_children,
+            key=lambda child: room_order.get(child.tag, len(room_order)),
+        )
 
 
 class Sh3dDocument:
