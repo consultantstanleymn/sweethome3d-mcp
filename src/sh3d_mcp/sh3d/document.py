@@ -38,6 +38,28 @@ def reorder_children(root: ET.Element) -> None:
         )
 
 
+class IdAllocator:
+    """Allocate stable per-prefix ids without reusing values during a document lifetime."""
+
+    def __init__(self, root: ET.Element) -> None:
+        self._used_ids = {
+            element_id
+            for element in root.iter()
+            if (element_id := element.get("id")) is not None
+        }
+
+    def next_id(self, prefix: str) -> str:
+        """Return the smallest unused id for a prefix and reserve it immediately."""
+
+        index = 0
+        while True:
+            candidate = f"{prefix}{index}"
+            if candidate not in self._used_ids:
+                self._used_ids.add(candidate)
+                return candidate
+            index += 1
+
+
 class Sh3dDocument:
     """In-memory representation of a Sweet Home 3D Home.xml tree plus non-XML ZIP entries."""
 
@@ -45,6 +67,7 @@ class Sh3dDocument:
         self.root = root
         self.entries = entries
         self.path = path
+        self.id_allocator = IdAllocator(root)
 
     @classmethod
     def create(

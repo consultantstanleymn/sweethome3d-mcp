@@ -6,7 +6,7 @@ import pytest
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.sh3d import archive
 from sh3d_mcp.sh3d.constants import HOME_CHILD_ORDER, HOME_XML_ENTRY
-from sh3d_mcp.sh3d.document import Sh3dDocument, reorder_children
+from sh3d_mcp.sh3d.document import IdAllocator, Sh3dDocument, reorder_children
 
 
 def test_create_save_open_preserves_home_name(tmp_path: Path) -> None:
@@ -65,3 +65,32 @@ def test_reorder_children_sorts_room_children_with_points_last() -> None:
     reorder_children(root)
 
     assert [child.tag for child in room] == ["property", "point", "point"]
+
+
+def test_id_allocator_fills_gaps_for_existing_ids_in_tree() -> None:
+    root = ET.Element("home")
+    root.append(ET.Element("wall", {"id": "wall0"}))
+    root.append(ET.Element("room"))
+    root.find("room").append(ET.Element("label", {"id": "wall2"}))
+
+    allocator = IdAllocator(root)
+
+    assert allocator.next_id("wall") == "wall1"
+    assert allocator.next_id("wall") == "wall3"
+
+
+def test_id_allocator_starts_unused_prefix_at_zero() -> None:
+    document = Sh3dDocument.create(Path("unused.sh3d"), name="Demo")
+
+    assert document.id_allocator.next_id("room") == "room0"
+
+
+def test_id_allocator_never_reissues_same_value_for_same_prefix() -> None:
+    document = Sh3dDocument.create(Path("repeat.sh3d"), name="Demo")
+
+    first_id = document.id_allocator.next_id("wall")
+    second_id = document.id_allocator.next_id("wall")
+
+    assert first_id == "wall0"
+    assert second_id == "wall1"
+    assert first_id != second_id
