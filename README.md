@@ -2,7 +2,7 @@
 
 `sweethome3d-mcp` is a local stdio MCP server for creating and editing Sweet Home 3D `.sh3d` projects on disk. It operates directly on `Home.xml` inside the ZIP archive so an LLM can add, inspect, validate, export, and delete supported plan elements without a running Sweet Home 3D instance.
 
-Verified against Sweet Home 3D version: `TODO after Phase 4.6-4.8 real-application verification`
+Verified against Sweet Home 3D version: `7.9.303.0` (`eTeks.SweetHome3D_7.9.303.0_x64`, Microsoft Store package)
 
 ## Install
 

@@ -10,6 +10,8 @@ from sh3d_mcp.errors import ErrorCode, Sh3dError
 
 from .constants import HOME_XML_ENTRY
 
+ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+
 
 def read_entries(path: Path) -> dict[str, bytes]:
     """Read every ZIP entry from a .sh3d archive into memory."""
@@ -42,7 +44,9 @@ def write_sh3d(path: Path, entries: dict[str, bytes], compress: bool = True) -> 
     try:
         with zipfile.ZipFile(tmp_path, "w", compression=compression) as archive:
             for name in ordered_names:
-                archive.writestr(name, entries[name])
+                info = zipfile.ZipInfo(filename=name, date_time=ZIP_EPOCH)
+                info.compress_type = compression
+                archive.writestr(info, entries[name])
         os.replace(tmp_path, path)
         return path.stat().st_size
     except Exception:

@@ -47,7 +47,12 @@ will be saved in files and **read in priority** from saved files."*
 
 **Conclusion: a ZIP containing only `Home.xml` (plus any content entries it references)
 is a valid, openable `.sh3d` for Sweet Home 3D ≥ 5.3.** We never need to emit the
-Java-serialized `Home` entry, and we must never attempt to. See §9-A for the version floor.
+Java-serialized `Home` entry, and we must never attempt to.
+
+**Verified against a real install:** a generated XML-only `.sh3d` from this project
+opened successfully in **Sweet Home 3D 7.9.303.0**
+(`eTeks.SweetHome3D_7.9.303.0_x64`, Microsoft Store package). Walls, rooms, and furniture
+were present and correct in the 3-D view and furniture list, with no corruption warnings.
 
 ### 2.2 ZIP mechanics
 - Compression: SH3D uses deflate level 0 (uncompressed) or 9. Python's `zipfile` with
@@ -74,13 +79,21 @@ Java-serialized `Home` entry, and we must never attempt to. See §9-A for the ve
   preference only and is *not* persisted into `Home.xml` geometry.
 - Defaults from the shipped preferences **[SRC: DefaultUserPreferences.properties]**:
   `newWallThickness=7.5`, `newHomeWallHeight=250`, `newFloorThickness=12`.
-- Coordinate system: 2-D plan is `x` to the right, `y` **downward** (screen convention);
-  `z`/`elevation` is height above the level's floor, upward. **[INF — see §9-B]**
+- Coordinate system: 2-D plan is believed to be `x` to the right, `y` **downward** (screen
+  convention); `z`/`elevation` is height above the level's floor, upward.
+  **[INF — see §9-B]**
 - **All angles in `Home.xml` are in radians and are written raw.** The exporter does
   `writer.writeFloatAttribute("angle", piece.getAngle())` and the handler does
   `piece.setAngle(parseOptionalFloat(attributes,"angle"))` — **no degree conversion at any
   point** **[SRC: HomeXMLExporter.java:372, HomeXMLHandler.java:1187-1189]**. This applies to
   `angle`, `nameAngle`, `areaAngle`, `pitch`, `roll`, `northDirection`, `yaw`.
+- **Empirical partial verification in Sweet Home 3D 7.9.303.0:** writing furniture angles as
+  `math.radians(rotation % 360)` produces the expected **magnitude and axis-swap effect** for
+  rectangular furniture. A 140 cm × 70 cm desk at `rotation=0` appeared wide and shallow,
+  while the same desk at `rotation=90` appeared narrow and deep in the 3-D view. This
+  confirms the rotation is not ignored and that 90° swaps the width/depth footprint as
+  expected. The exact clockwise-vs-counterclockwise handedness and the independent `y`-down
+  direction remain unverified because the tested install's 2-D plan view was blank. See §9-B.
 - Numbers are Java `float` formatted with `Float.toString`-style output; `#.#`-free plain
   decimals are accepted on read. Locale is not a factor — always `.` as decimal separator.
 
@@ -246,6 +259,10 @@ parseContent(planIcon), parseContent(model), width, depth, height, ...))`
   furniture catalogue. Nothing is resolved from it.
 - `name`, `width`, `depth`, `height`, `x`, `y` are `#REQUIRED` and must be supplied by us.
 - `model` is a *content reference*, not an id.
+- **Verified against a real install:** in **Sweet Home 3D 7.9.303.0**, a
+  `pieceOfFurniture` with **no `model` attribute** renders in the 3-D view as a plain
+  placeholder box sized correctly from `width` / `depth` / `height`. It is not invisible
+  and does not error.
 
 ### 5.6 Content references (`model`, `icon`, `image`, texture `image`) **[SRC]**
 `HomeXMLHandler.parseContent(String s)`:
@@ -318,28 +335,23 @@ as calls arrive. See ARCHITECTURE.md §5.
 
 ---
 
-## 9. Open questions / uncertainties
+## 9. Remaining open questions / uncertainties
 
 Every item below is something I could **not** fully confirm from a primary source. Nothing
 here is presented as fact elsewhere in this document.
 
-**A. Minimum Sweet Home 3D version that opens an XML-only `.sh3d`.**
-`Home.xml` was introduced in Sweet Home 3D **5.3** (per the 5.3 release blog post, which
-states the `Home` entry "is still present to ensure compatibility … but will be removed in a
-future version"). I confirmed from source that the *reader* prefers `Home.xml` when
-`preferXmlEntry=true`, and that the desktop app passes `true` — **but only in the 2017
-mirror**. I could not verify the exact release in which the app started passing `true`.
-*Action:* Phase 4 must smoke-test an XML-only file against a real Sweet Home 3D 7.x install.
-Declare a supported floor of **6.0** until tested.
-
 **B. Sign convention of the `y` axis and of `angle`.**
-Sweet Home 3D's plan uses screen coordinates with `y` increasing **downward**; a positive
-`angle` therefore appears **clockwise** on screen. I did not find an explicit statement of
-this in the source I read — it is inferred from the plan being a Java2D component. This
-affects: furniture rotation direction, room winding/shoelace sign, and dimension-line
-`offset` sign. *Action:* Phase 4 item 4.6 must verify empirically against a reference file.
-Until verified, `add_furniture(rotation_degrees=90)` should be documented as "90° clockwise
-in plan view (unverified)".
+Sweet Home 3D's plan likely uses screen coordinates with `y` increasing **downward**, and a
+positive `angle` likely appears **clockwise** on screen. I did not find an explicit
+statement of this in the source I read — it is inferred from the plan being a Java2D
+component. Manual verification in **Sweet Home 3D 7.9.303.0** confirmed that a 90° rotation
+written by this project has the correct **magnitude** and swaps a rectangular furniture
+footprint between width/depth axes as expected, but the exact clockwise-vs-counterclockwise
+handedness and the independent `y`-axis direction could not be confirmed because the tested
+install's 2-D plan view was blank. This still affects the precise interpretation of
+furniture rotation direction, room winding/shoelace sign, and dimension-line `offset` sign.
+*Action:* confirm against a working 2-D plan view. Until then, rotation-related docstrings
+should keep the handedness note marked as unverified.
 
 **C. Correct `version` integer for current Sweet Home 3D.**
 `Home.CURRENT_VERSION = 5300` in the 2017 mirror. Modern releases certainly use a higher
@@ -353,13 +365,6 @@ The attribute is `#IMPLIED` so omitting it is also legal.
 accepts `#rrggbb`, `0x…`, plain decimal, or all three, nor whether the high byte carries
 alpha. *Action:* read `HomeXMLHandler.parseOptionalColor` before implementing any colour
 feature. v1 emits no colour attributes at all, so this is deferred.
-
-**E. Behaviour of a `pieceOfFurniture` with no `model` attribute.**
-`parseContent(null)` returns `null`, so the piece is constructed with a null model. The plan
-view will draw its footprint rectangle, but I do **not** know whether the 3-D view renders a
-placeholder box, renders nothing, or throws. *Action:* Phase 4 item 4.7 must test this; it
-determines whether "model-less placeholder furniture" is a viable default (see
-ARCHITECTURE.md §7, Catalogue strategy).
 
 **F. Is `ContentDigests` ever required?**
 It appears to be repair metadata only, and `DefaultHomeInputStream` reads `Home.xml`
