@@ -2,7 +2,18 @@
 
 `sweethome3d-mcp` is a local stdio MCP server for creating and editing Sweet Home 3D `.sh3d` projects on disk. It operates directly on `Home.xml` inside the ZIP archive so an LLM can add, inspect, validate, export, and delete supported plan elements without a running Sweet Home 3D instance.
 
+This is a personal/community project. It is not affiliated with, endorsed by, or maintained by eTeks or the Sweet Home 3D project.
+
 Verified against Sweet Home 3D version: `7.9.303.0` (`eTeks.SweetHome3D_7.9.303.0_x64`, Microsoft Store package)
+
+## License
+
+This repository is released under the [MIT License](LICENSE). The schema-research provenance for `docs/SCHEMA.md` and the rationale for using MIT in this repository are documented in [NOTICE.md](NOTICE.md).
+
+## Credits / Author
+
+Author: Stanley S Nelavala  
+GitHub: [consultantstanleymn](https://github.com/consultantstanleymn)
 
 ## Install
 
@@ -87,7 +98,7 @@ add_dimension(
 export_project(project_path="house.sh3d")
 ```
 
-All tool lengths are in centimetres. Tool rotations are in degrees. Plan coordinates use `x` increasing to the right and `y` increasing downward. The positive on-screen rotation direction is still unverified until Phase 4.6 completes against a real Sweet Home 3D install.
+All tool lengths are in centimetres. Tool rotations are in degrees. Plan coordinates use `x` increasing to the right. The exact positive on-screen rotation handedness and independent `y`-axis direction remain unverified because the tested Sweet Home 3D install had a broken 2-D plan view; see [docs/SCHEMA.md §9-B](docs/SCHEMA.md#9-remaining-open-questions--uncertainties).
 
 ## Limitations
 
@@ -113,6 +124,20 @@ The server currently registers these tools:
 - `open_reference`
 - `validate_project`
 - `delete_element`
+
+## Known Issues / Open Questions
+
+These are still genuinely open and will also be tracked as GitHub issues for contributors:
+
+- Rotation handedness and `y`-axis direction: 90° rotation magnitude and width/depth axis swap are confirmed in real Sweet Home 3D, but exact clockwise-vs-counterclockwise handedness and independent `y`-down confirmation remain unverified because the tested install's 2-D plan view was blank. This is the highest-value open item because it affects the precise semantics of rotation and some geometry interpretation. See [docs/SCHEMA.md §9-B](docs/SCHEMA.md#9-remaining-open-questions--uncertainties).
+- Modern `Home.CURRENT_VERSION` integer: the project currently writes the known-safe `5300` value from a 2017 source mirror because lower is safer than accidentally claiming a newer unsupported version. The actual current integer for modern Sweet Home 3D still needs confirmation from newer source or a verified file sample. See [docs/SCHEMA.md §9-C](docs/SCHEMA.md#9-remaining-open-questions--uncertainties).
+- Colour attribute encoding: colour authoring is not implemented yet, and the exact accepted wire format for colour attributes still needs direct confirmation. The current docs note decimal-or-hex uncertainty and intentionally defer the feature. See [docs/SCHEMA.md §9-D](docs/SCHEMA.md#9-remaining-open-questions--uncertainties).
+- `ContentDigests` necessity: the implementation intentionally omits `ContentDigests` on write because `Home.xml` loads without it in source analysis, but it is still not fully proven whether a real Sweet Home 3D open ever requires it in any edge case. See [docs/SCHEMA.md §9-F](docs/SCHEMA.md#9-remaining-open-questions--uncertainties).
+- Multi-level support: multi-floor homes remain out of scope for v1 and would be a substantial feature rather than a small patch. The format details around levels and `elevationIndex` also remain under-investigated. See [docs/SCHEMA.md §9-K](docs/SCHEMA.md#9-remaining-open-questions--uncertainties).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for practical development setup and conventions. Longer-form contributor notes and project summaries will live in the repository Wiki under [`wiki/`](wiki/).
 
 ## Attribution
 
