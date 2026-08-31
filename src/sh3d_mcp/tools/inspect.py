@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from dataclasses import asdict, replace
 
+from sh3d_mcp.catalog import ReferenceCatalog
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.geometry.primitives import point_in_polygon
+from sh3d_mcp.sh3d import archive
+from sh3d_mcp.sh3d.constants import KNOWN_ATTRS, KNOWN_TAGS
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.sh3d.elements import dimension_view, furniture_view, room_view, wall_view
 from sh3d_mcp.tools.project import _validate_project_path
@@ -69,6 +72,45 @@ def list_elements(
         result["dimensions"] = [asdict(view) for view in dimension_views]
 
     return result
+
+
+def open_reference(sample_sh3d_path: str) -> dict:
+    """Inspect a reference .sh3d file and populate the in-process furniture catalogue cache. Lengths are in centimetres and rotations in degrees. The plan coordinate system uses y increasing downward. This tool does not modify the sample archive or copy any content into another project. Example: open_reference(sample_sh3d_path='sample.sh3d')"""
+
+    path = _validate_project_path(sample_sh3d_path)
+    if not path.exists():
+        raise Sh3dError(
+            ErrorCode.PROJECT_NOT_FOUND,
+            f"Project file does not exist: {path}",
+            details={"project_path": str(path)},
+        )
+
+    entries = archive.read_entries(path)
+    document = Sh3dDocument.open(path)
+    reference_catalog = ReferenceCatalog.from_project_path(path)
+    tag_counts = _tag_census(document)
+    unknown_tags, unknown_attributes = _unknown_schema_items(document)
+
+    return {
+        "ok": True,
+        "entry_names": list(entries),
+        "home": dict(document.root.attrib),
+        "tag_counts": tag_counts,
+        "unknown_tags": unknown_tags,
+        "unknown_attributes": unknown_attributes,
+        "catalog_entries": {
+            catalog_id: {
+                "name": entry.name,
+                "width": entry.width,
+                "depth": entry.depth,
+                "height": entry.height,
+                "model_rotation": entry.model_rotation,
+                "has_model": entry.model_bytes is not None,
+                "model_entry_name": entry.model_entry_name,
+            }
+            for catalog_id, entry in sorted(reference_catalog.entries.items())
+        },
+    }
 
 
 def _normalize_kinds(kinds: list[str] | None) -> list[str]:
@@ -139,3 +181,27 @@ def _unsupported_tags(document: Sh3dDocument) -> list[str]:
     tags = {element.tag for element in document.root.iter()}
     tags.discard(document.root.tag)
     return sorted(tag for tag in tags if tag not in EDITABLE_TAGS)
+
+
+def _tag_census(document: Sh3dDocument) -> dict[str, int]:
+    """Count every tag present in the document tree, including the home root."""
+
+    counts: dict[str, int] = {}
+    for element in document.root.iter():
+        counts[element.tag] = counts.get(element.tag, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _unknown_schema_items(document: Sh3dDocument) -> tuple[list[str], dict[str, list[str]]]:
+    """Diff document tags and attributes against the known DTD-derived tables."""
+
+    unknown_tags = sorted({element.tag for element in document.root.iter() if element.tag not in KNOWN_TAGS})
+    unknown_attributes: dict[str, list[str]] = {}
+    for element in document.root.iter():
+        known_attrs = KNOWN_ATTRS.get(element.tag)
+        if known_attrs is None:
+            continue
+        attrs = sorted(attr for attr in element.attrib if attr not in known_attrs)
+        if attrs:
+            unknown_attributes[element.tag] = attrs
+    return unknown_tags, unknown_attributes

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from sh3d_mcp.sh3d import archive
 from sh3d_mcp.sh3d.constants import HOME_XML_ENTRY
-from sh3d_mcp.tools.inspect import list_elements
+from sh3d_mcp.tools.inspect import list_elements, open_reference
 
 
 def test_list_elements_reports_unsupported_tags_and_does_not_write(tmp_path: Path) -> None:
@@ -36,4 +36,49 @@ def test_list_elements_reports_unsupported_tags_and_does_not_write(tmp_path: Pat
     assert "observerCamera" in result["unsupported_elements_present"]
     assert result["furniture"][0]["room_name"] == "Kitchen"
     assert result["bounds"] == {"min_x": 0.0, "min_y": 0.0, "max_x": 100.0, "max_y": 100.0}
+    assert after_mtime == before_mtime
+
+
+def test_open_reference_reports_unknown_tags_and_populates_catalog(tmp_path: Path) -> None:
+    project_path = tmp_path / "reference.sh3d"
+    model_bytes = b"reference-model"
+    home_xml = b"""<?xml version='1.0'?>
+<home version='5300' name='Reference' camera='topCamera' wallHeight='250'>
+  <futureThing/>
+  <pieceOfFurniture id='furniture0' catalogId='custom#chair' name='Reference Chair'
+                    x='50' y='50' width='45' depth='47' height='91' model='models/1.obj'/>
+</home>
+"""
+    archive.write_sh3d(
+        project_path,
+        {
+            HOME_XML_ENTRY: home_xml,
+            "models/1.obj": model_bytes,
+        },
+    )
+
+    before_mtime = os.path.getmtime(project_path)
+    result = open_reference(sample_sh3d_path=str(project_path))
+    after_mtime = os.path.getmtime(project_path)
+
+    assert result["ok"] is True
+    assert result["unknown_tags"] == ["futureThing"]
+    assert result["entry_names"] == [HOME_XML_ENTRY, "models/1.obj"]
+    assert result["home"] == {
+        "version": "5300",
+        "name": "Reference",
+        "camera": "topCamera",
+        "wallHeight": "250",
+    }
+    assert result["tag_counts"]["home"] == 1
+    assert result["tag_counts"]["pieceOfFurniture"] == 1
+    assert result["catalog_entries"]["custom#chair"] == {
+        "name": "Reference Chair",
+        "width": 45.0,
+        "depth": 47.0,
+        "height": 91.0,
+        "model_rotation": "1 0 0 0 1 0 0 0 1",
+        "has_model": True,
+        "model_entry_name": "models/1.obj",
+    }
     assert after_mtime == before_mtime
