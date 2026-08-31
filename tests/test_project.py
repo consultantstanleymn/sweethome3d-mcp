@@ -3,9 +3,11 @@ from pathlib import Path
 import pytest
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
+from sh3d_mcp.sh3d import archive
+from sh3d_mcp.sh3d.constants import HOME_XML_ENTRY
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.sh3d.elements import room_view, wall_view
-from sh3d_mcp.tools.project import create_project, export_project
+from sh3d_mcp.tools.project import create_project, export_project, validate_project
 
 
 def test_create_project_builds_closed_rectangle_room_and_reciprocal_joins(tmp_path: Path) -> None:
@@ -87,3 +89,41 @@ def test_export_project_is_idempotent_and_preserves_canonical_bytes(tmp_path: Pa
     assert first["validation"] == {"errors": [], "warnings": []}
     assert second["validation"] == {"errors": [], "warnings": []}
     assert first_bytes == second_bytes
+
+
+def test_validate_project_reports_dangling_wall_join_reference(tmp_path: Path) -> None:
+    project_path = tmp_path / "dangling-join.sh3d"
+    home_xml = b"""<?xml version='1.0'?>
+<home version='5300' name='Dangling' camera='topCamera' wallHeight='250'>
+  <wall id='wall0' xStart='0' yStart='0' xEnd='100' yEnd='0' thickness='7.5' wallAtStart='missingWall'/>
+</home>
+"""
+    archive.write_sh3d(project_path, {HOME_XML_ENTRY: home_xml})
+
+    result = validate_project(project_path=str(project_path))
+
+    assert result["ok"] is True
+    assert any(
+        issue["code"] == ErrorCode.ELEMENT_NOT_FOUND.value
+        and issue["details"] == {
+            "element_id": "wall0",
+            "attribute": "wallAtStart",
+            "missing_id": "missingWall",
+        }
+        for issue in result["errors"]
+    )
+
+
+def test_validate_project_clean_document_returns_no_issues(tmp_path: Path) -> None:
+    project_path = tmp_path / "clean.sh3d"
+    create_project(
+        project_path=str(project_path),
+        name="House",
+        width=800.0,
+        height=600.0,
+        wall_thickness=7.5,
+    )
+
+    result = validate_project(project_path=str(project_path))
+
+    assert result == {"ok": True, "errors": [], "warnings": []}
