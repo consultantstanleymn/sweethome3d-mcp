@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 

@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a new tool, parameter, or capability
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do that isn't currently possible?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: If you have one in mind — new tool signature, changed behavior, etc. Not required.
+    validations:
+      required: false
+
+  - type: textarea
+    id: schema-impact
+    attributes:
+      label: Does this touch the .sh3d schema in a new way?
+      description: If yes, note whether docs/SCHEMA.md already covers the relevant elements/attributes, or whether new format research would be needed first.
+    validations:
+      required: false

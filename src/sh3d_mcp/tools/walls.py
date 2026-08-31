@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.geometry.joins import join_new_wall
-from sh3d_mcp.geometry.validation import check_scalars, wall_is_duplicate, walls_properly_cross
+from sh3d_mcp.geometry.validation import (
+    check_scalars,
+    wall_is_duplicate,
+    walls_properly_cross,
+)
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.sh3d.elements import make_wall
 from sh3d_mcp.tools.project import _validate_project_path

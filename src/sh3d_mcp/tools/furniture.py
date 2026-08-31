@@ -5,7 +5,13 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-from sh3d_mcp.catalog import BUILTIN_CATALOG, CatalogEntry, ReferenceCatalog, _REFERENCE_CACHE, resolve_catalog_entry
+from sh3d_mcp.catalog import (
+    _REFERENCE_CACHE,
+    BUILTIN_CATALOG,
+    CatalogEntry,
+    ReferenceCatalog,
+    resolve_catalog_entry,
+)
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.geometry.primitives import point_in_polygon, polygon_bbox
 from sh3d_mcp.geometry.validation import check_scalars, furniture_overlaps

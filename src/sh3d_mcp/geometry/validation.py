@@ -8,7 +8,6 @@ from typing import Mapping
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 
 from .primitives import (
-    EPS_PARALLEL,
     EPS_POINT,
     MIN_DIMENSION_LENGTH,
     MIN_ROOM_AREA,
@@ -16,8 +15,8 @@ from .primitives import (
     MIN_WALL_THICKNESS,
     Pt,
     dist,
-    oriented_rect_corners,
     orient,
+    oriented_rect_corners,
     point_in_polygon,
     polygon_bbox,
     sat_overlap,

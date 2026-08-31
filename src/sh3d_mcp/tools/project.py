@@ -6,9 +6,20 @@ from pathlib import Path
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.geometry.primitives import JOIN_TOLERANCE, dist
-from sh3d_mcp.geometry.validation import check_scalars, furniture_overlaps, rooms_overlap, validate_room_points, wall_is_duplicate, walls_properly_cross
+from sh3d_mcp.geometry.validation import (
+    check_scalars,
+    furniture_overlaps,
+    rooms_overlap,
+    validate_room_points,
+    wall_is_duplicate,
+    walls_properly_cross,
+)
 from sh3d_mcp.sh3d import archive
-from sh3d_mcp.sh3d.constants import CONTENT_DIGESTS_ENTRY, HOME_XML_ENTRY, LEGACY_HOME_ENTRY
+from sh3d_mcp.sh3d.constants import (
+    CONTENT_DIGESTS_ENTRY,
+    HOME_XML_ENTRY,
+    LEGACY_HOME_ENTRY,
+)
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.sh3d.elements import make_room, make_wall
 

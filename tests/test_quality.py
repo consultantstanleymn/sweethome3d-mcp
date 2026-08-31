@@ -1,6 +1,6 @@
 import inspect
-from pathlib import Path
 import re
+from pathlib import Path
 
 from sh3d_mcp import server
 

@@ -1,5 +1,10 @@
 # sweethome3d-mcp
 
+[![Tests](https://github.com/consultantstanleymn/sweethome3d-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/consultantstanleymn/sweethome3d-mcp/actions/workflows/test.yml)
+[![CodeQL](https://github.com/consultantstanleymn/sweethome3d-mcp/actions/workflows/codeql.yml/badge.svg)](https://github.com/consultantstanleymn/sweethome3d-mcp/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
+
 `sweethome3d-mcp` is a local stdio MCP server for creating and editing Sweet Home 3D `.sh3d` projects on disk. It operates directly on `Home.xml` inside the ZIP archive so an LLM can add, inspect, validate, export, and delete supported plan elements without a running Sweet Home 3D instance.
 
 This is a personal/community project. It is not affiliated with, endorsed by, or maintained by eTeks or the Sweet Home 3D project.

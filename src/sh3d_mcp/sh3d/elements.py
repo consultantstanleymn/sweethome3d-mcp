@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 
 from sh3d_mcp.geometry.primitives import Pt, dist, orient, shoelace_signed_area
 

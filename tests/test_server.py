@@ -2,7 +2,6 @@ import asyncio
 
 from sh3d_mcp.server import mcp
 
-
 EXPECTED_TOOL_REQUIRED_PARAMS = {
     "create_project": ["project_path", "name"],
     "add_wall": ["project_path", "x1", "y1", "x2", "y2"],

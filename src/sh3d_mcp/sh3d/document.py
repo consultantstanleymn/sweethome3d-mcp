@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 

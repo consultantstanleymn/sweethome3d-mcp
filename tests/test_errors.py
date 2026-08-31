@@ -1,6 +1,5 @@
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 
-
 EXPECTED_ERROR_CODES = [
     "BAD_PATH",
     "PROJECT_NOT_FOUND",

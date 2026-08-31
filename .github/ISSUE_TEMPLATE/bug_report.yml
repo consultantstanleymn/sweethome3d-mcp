@@ -1,0 +1,36 @@
+name: Bug report
+description: Something doesn't work as documented
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what actually happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: The exact tool call(s) and arguments that trigger it, if applicable.
+      render: python
+    validations:
+      required: false
+
+  - type: input
+    id: sh3d-version
+    attributes:
+      label: Sweet Home 3D version (if relevant)
+      placeholder: e.g. 7.9.303.0
+    validations:
+      required: false
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: e.g. 3.12
+    validations:
+      required: true

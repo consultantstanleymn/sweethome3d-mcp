@@ -1,5 +1,5 @@
-from pathlib import Path
 import re
+from pathlib import Path
 
 from sh3d_mcp.errors import ErrorCode
 from sh3d_mcp.geometry import primitives
