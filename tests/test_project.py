@@ -5,7 +5,7 @@ import pytest
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.sh3d.elements import room_view, wall_view
-from sh3d_mcp.tools.project import create_project
+from sh3d_mcp.tools.project import create_project, export_project
 
 
 def test_create_project_builds_closed_rectangle_room_and_reciprocal_joins(tmp_path: Path) -> None:
@@ -63,3 +63,27 @@ def test_create_project_existing_target_without_overwrite_raises_project_exists(
         create_project(project_path=str(project_path), name="House", overwrite=False)
 
     assert exc_info.value.code is ErrorCode.PROJECT_EXISTS
+
+
+def test_export_project_is_idempotent_and_preserves_canonical_bytes(tmp_path: Path) -> None:
+    project_path = tmp_path / "house.sh3d"
+    destination_path = tmp_path / "house-exported.sh3d"
+
+    create_project(
+        project_path=str(project_path),
+        name="House",
+        width=800.0,
+        height=600.0,
+        wall_thickness=7.5,
+    )
+
+    first = export_project(project_path=str(project_path), destination_path=str(destination_path))
+    first_bytes = destination_path.read_bytes()
+    second = export_project(project_path=str(destination_path))
+    second_bytes = destination_path.read_bytes()
+
+    assert first["ok"] is True
+    assert second["ok"] is True
+    assert first["validation"] == {"errors": [], "warnings": []}
+    assert second["validation"] == {"errors": [], "warnings": []}
+    assert first_bytes == second_bytes
