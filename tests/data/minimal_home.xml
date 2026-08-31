@@ -1,0 +1,10 @@
+<?xml version='1.0'?>
+<home version='5300' name='Demo' camera='topCamera' wallHeight='250'>
+  <wall id='wall0' xStart='0.0' yStart='0.0' xEnd='500.0' yEnd='0.0' thickness='7.5' height='250.0'/>
+  <room name='Living'>
+    <point x='0.0' y='0.0'/>
+    <point x='500.0' y='0.0'/>
+    <point x='500.0' y='400.0'/>
+    <point x='0.0' y='400.0'/>
+  </room>
+</home>

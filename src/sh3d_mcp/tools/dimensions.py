@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
-from sh3d_mcp.geometry.primitives import MIN_DIMENSION_LENGTH
 from sh3d_mcp.geometry.validation import check_scalars
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.sh3d.elements import make_dimension_line
@@ -49,16 +48,8 @@ def add_dimension(
     document.root.append(dimension)
     document.save()
 
-    length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-    if length < MIN_DIMENSION_LENGTH:
-        raise Sh3dError(
-            ErrorCode.DEGENERATE_DIMENSION,
-            f"Dimension line length must be >= {MIN_DIMENSION_LENGTH} cm.",
-            details={"length": length},
-        )
-
     return {
         "ok": True,
         "dimension_id": dimension_id,
-        "length": length,
+        "length": ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5,
     }

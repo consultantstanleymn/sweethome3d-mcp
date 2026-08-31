@@ -1,10 +1,10 @@
-import hashlib
 from pathlib import Path
 
 from sh3d_mcp.errors import ErrorCode, Sh3dError
 from sh3d_mcp.sh3d.document import Sh3dDocument
 from sh3d_mcp.tools.project import create_project
 from sh3d_mcp.tools.walls import add_wall
+from tests.conftest import sha256
 
 
 def test_add_wall_joins_at_shared_corner_and_snaps_endpoint_within_tolerance(tmp_path: Path) -> None:
@@ -48,7 +48,7 @@ def test_add_wall_duplicate_returns_documented_error_and_leaves_file_unchanged(t
         x2=100.0,
         y2=0.0,
     )
-    before = hashlib.sha256(project_path.read_bytes()).hexdigest()
+    before = sha256(project_path)
 
     try:
         add_wall(
@@ -63,5 +63,5 @@ def test_add_wall_duplicate_returns_documented_error_and_leaves_file_unchanged(t
     else:
         raise AssertionError("Expected WALL_DUPLICATE")
 
-    after = hashlib.sha256(project_path.read_bytes()).hexdigest()
+    after = sha256(project_path)
     assert after == before
